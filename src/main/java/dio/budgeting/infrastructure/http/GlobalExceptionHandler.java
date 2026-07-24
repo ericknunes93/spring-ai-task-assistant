@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleIllegalArgumentException(IllegalArgumentException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         problemDetail.setTitle("Requisição Inválida");
-        problemDetail.setType(URI.create("/errors/bad-request"));
+        problemDetail.setType(URI.create("urn:problem:bad-request"));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
     }
 
@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleIOException(IOException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Erro no processamento de arquivo: " + ex.getMessage());
         problemDetail.setTitle("Erro de Entrada e Saída");
-        problemDetail.setType(URI.create("/errors/io-error"));
+        problemDetail.setType(URI.create("urn:problem:io-error"));
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
 
@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleGenericException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
         problemDetail.setTitle("Erro Interno de Processamento");
-        problemDetail.setType(URI.create("/errors/internal-server-error"));
+        problemDetail.setType(URI.create("urn:problem:internal-server-error"));
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
 }

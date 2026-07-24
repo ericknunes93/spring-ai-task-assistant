@@ -46,10 +46,13 @@ public class VoiceBudgetController {
         // 3. Text-To-Speech (TTS)
         byte[] audioResponseBytes = textToSpeechService.synthesizeSpeech(responseText);
 
+        String safeHeaderValue = transcribedText != null ?
+                transcribedText.replaceAll("[\\r\\n]", " ").substring(0, Math.min(transcribedText.length(), 200)) : "";
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("audio/mpeg"));
         headers.setContentLength(audioResponseBytes.length);
-        headers.add("X-Transcribed-Text", transcribedText);
+        headers.add("X-Transcribed-Text", safeHeaderValue);
 
         return new ResponseEntity<>(audioResponseBytes, headers, HttpStatus.OK);
     }
