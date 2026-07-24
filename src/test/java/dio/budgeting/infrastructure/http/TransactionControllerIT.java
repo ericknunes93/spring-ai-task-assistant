@@ -77,4 +77,22 @@ class TransactionControllerIT {
                 .andExpect(jsonPath("$.totalReceitas").exists())
                 .andExpect(jsonPath("$.saldoAtual").exists());
     }
+
+    @Test
+    void shouldReturnBadRequestWithProblemDetailWhenAmountIsNegative() throws Exception {
+        CreateTransactionCommand invalidCommand = new CreateTransactionCommand(
+                new BigDecimal("-50.00"),
+                TransactionType.DESPESA,
+                TransactionCategory.ALIMENTACAO,
+                "Valor negativo inválido"
+        );
+
+        mockMvc.perform(post("/api/transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidCommand)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("urn:problem:validation-error"))
+                .andExpect(jsonPath("$.title").value("Falha de Validação"))
+                .andExpect(jsonPath("$.detail").value("amount: O valor da transação deve ser maior que zero."));
+    }
 }
