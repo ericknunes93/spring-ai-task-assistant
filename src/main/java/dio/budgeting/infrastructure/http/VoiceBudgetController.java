@@ -10,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/budget")
 public class VoiceBudgetController {
@@ -34,29 +32,25 @@ public class VoiceBudgetController {
      * adicionando a etapa previa de Speech-To-Text (Whisper) e a sintese posterior de Text-To-Speech.
      */
     @PostMapping(value = "/voice-command", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> processVoiceCommand(@RequestParam("file") MultipartFile audioFile) {
+    public ResponseEntity<byte[]> processVoiceCommand(@RequestParam("file") MultipartFile audioFile) {
         if (audioFile.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Arquivo de áudio não pode estar vazio."));
+            throw new IllegalArgumentException("Arquivo de áudio não pode estar vazio.");
         }
 
-        try {
-            // 1. Speech-To-Text (Whisper)
-            String transcribedText = speechToTextService.transcribe(audioFile.getResource());
+        // 1. Speech-To-Text (Whisper)
+        String transcribedText = speechToTextService.transcribe(audioFile.getResource());
 
-            // 2. ChatClient + Tool Calling (Reutilização do fluxo textual)
-            String responseText = chatService.processNaturalLanguageCommand(transcribedText);
+        // 2. ChatClient + Tool Calling (Reutilização do fluxo textual)
+        String responseText = chatService.processNaturalLanguageCommand(transcribedText);
 
-            // 3. Text-To-Speech (TTS)
-            byte[] audioResponseBytes = textToSpeechService.synthesizeSpeech(responseText);
+        // 3. Text-To-Speech (TTS)
+        byte[] audioResponseBytes = textToSpeechService.synthesizeSpeech(responseText);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("audio/mpeg"));
-            headers.setContentLength(audioResponseBytes.length);
-            headers.add("X-Transcribed-Text", transcribedText);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("audio/mpeg"));
+        headers.setContentLength(audioResponseBytes.length);
+        headers.add("X-Transcribed-Text", transcribedText);
 
-            return new ResponseEntity<>(audioResponseBytes, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Erro ao processar comando de voz: " + e.getMessage()));
-        }
+        return new ResponseEntity<>(audioResponseBytes, headers, HttpStatus.OK);
     }
 }

@@ -20,14 +20,10 @@ public class BudgetCommandController {
     public ResponseEntity<Map<String, String>> processTextCommand(@RequestBody Map<String, String> request) {
         String textCommand = request.getOrDefault("message", "");
         if (textCommand.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Comando textual não pode ser vazio."));
+            throw new IllegalArgumentException("Comando textual não pode ser vazio.");
         }
 
-        try {
-            String responseText = chatService.processNaturalLanguageCommand(textCommand);
-            return ResponseEntity.ok(Map.of("response", responseText));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Erro no processamento da IA: " + e.getMessage()));
-        }
+        String responseText = chatService.processNaturalLanguageCommand(textCommand);
+        return ResponseEntity.ok(Map.of("response", responseText));
     }
 }

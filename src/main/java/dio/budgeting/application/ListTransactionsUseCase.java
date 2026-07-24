@@ -18,6 +18,11 @@ public class ListTransactionsUseCase {
     }
 
     public List<TransactionResponse> execute(TransactionType type, TransactionCategory category) {
+        if (type != null && category != null) {
+            return repository.findByTypeAndCategory(type, category).stream()
+                    .map(TransactionResponse::fromDomain)
+                    .toList();
+        }
         if (type != null) {
             return repository.findByType(type).stream()
                     .map(TransactionResponse::fromDomain)

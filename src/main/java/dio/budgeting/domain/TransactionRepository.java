@@ -8,5 +8,6 @@ public interface TransactionRepository {
     List<Transaction> findAll();
     List<Transaction> findByType(TransactionType type);
     List<Transaction> findByCategory(TransactionCategory category);
+    List<Transaction> findByTypeAndCategory(TransactionType type, TransactionCategory category);
     BigDecimal sumByType(TransactionType type);
 }

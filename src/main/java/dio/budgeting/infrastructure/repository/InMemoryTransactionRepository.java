@@ -26,7 +26,7 @@ public class InMemoryTransactionRepository implements TransactionRepository {
     @Override
     public Transaction save(Transaction transaction) {
         if (transaction.getId() == null) {
-            transaction.setId(idSequence.getAndIncrement());
+            transaction.assignId(idSequence.getAndIncrement());
         }
         storage.put(transaction.getId(), transaction);
         return transaction;
@@ -48,6 +48,13 @@ public class InMemoryTransactionRepository implements TransactionRepository {
     public List<Transaction> findByCategory(TransactionCategory category) {
         return storage.values().stream()
                 .filter(t -> t.getCategory() == category)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Transaction> findByTypeAndCategory(TransactionType type, TransactionCategory category) {
+        return storage.values().stream()
+                .filter(t -> t.getType() == type && t.getCategory() == category)
                 .collect(Collectors.toList());
     }
 
