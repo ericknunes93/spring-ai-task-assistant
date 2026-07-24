@@ -186,11 +186,20 @@ A aplicação adota duas estratégias de tratamento de erro intencionais e alinh
 
 ---
 
-## 🔒 Segurança & Evoluções Futuras (Mitigação de Prompt Injection)
+## 🌱 Evoluções Futuras
 
-- **Superfície de Ataque via Transcrição**:
-  - A descrição de transações geradas via transcrição de voz (`Whisper`) é armazenada e posteriormente pode retornar ao contexto do `ChatClient` durante consultas de histórico.
-  - **Evolução Futura**: Sanitização e delimitadores explícitos (ex: XML/Markdown blocks) no prompt do sistema para evitar que entradas maliciosas no áudio alterem o comportamento do modelo LLM (*Indirect Prompt Injection*).
+Este projeto foi desenvolvido durante o Bootcamp NTT DATA Java & IA da DIO utilizando os conceitos apresentados ao longo da trilha.
+
+Como estou em processo de aprofundamento em Java, Spring Boot e Spring AI, utilizei este projeto como uma oportunidade prática de aprendizado. Durante o desenvolvimento identifiquei algumas melhorias que pretendo implementar conforme avanço nos estudos:
+
+- Mitigar riscos de *Indirect Prompt Injection* por meio de sanitização e delimitação de contexto.
+- Configurar uma pipeline de CI/CD utilizando GitHub Actions.
+- Substituir o repositório em memória por PostgreSQL com Spring Data JPA.
+- Adicionar autenticação utilizando Spring Security e JWT.
+- Documentar a API com OpenAPI/Swagger.
+- Containerizar a aplicação com Docker e Docker Compose.
+- Ampliar a cobertura de testes automatizados.
+- Realizar o deploy da aplicação em ambiente de nuvem.
 
 ---
 
