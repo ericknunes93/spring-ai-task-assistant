@@ -1,122 +1,141 @@
-# 📋 TaskManager - Assistente Inteligente de Tarefas com Spring AI
+# 🎙️ DIO Spring Boot - API de Orçamento com Voz e Texto (Spring AI)
 
-Projeto desenvolvido como solução do **Desafio de Projeto Spring Boot / Spring AI** da Digital Innovation One (DIO).
+Projeto desenvolvido como solução do **Desafio de Projeto com Spring AI** da Digital Innovation One (DIO).
 
-O **TaskManager** é uma API em Java/Spring Boot estruturada com a arquitetura **Domain-Driven Design (DDD)** que integra recursos de **Inteligência Artificial (Spring AI Tool Calling)** para gerenciamento inteligente de tarefas por comandos de linguagem natural.
-
----
-
-## 🎯 Objetivo do Projeto
-
-Aplicar o ecossistema **Spring AI** mantendo o isolamento de camadas arquiteturais (DDD). 
-
-A aplicação permite criar, listar, atualizar e resumir tarefas através de requisições REST tradicionais ou interagindo diretamente com um modelo de linguagem (LLM - OpenAI/GPT), que decide e invoca as ferramentas da aplicação (`@Tool`) automaticamente.
+A **Spring AI Budgeting API** é uma aplicação Java/Spring Boot construída sobre os princípios de **Domain-Driven Design (DDD)** e **Single Responsibility Principle (SRP)**, capaz de processar comandos em linguagem natural por **texto** e **voz (upload de áudio)** para gestão de transações financeiras pessoais utilizando **Tool Calling** (Function Calling).
 
 ---
 
-## 🌟 Melhorias de Valor Implementadas
+## 🎯 Visão Geral & Funcionalidades
 
-1. **Arquitetura DDD Refatorada**:
-   - Organização estrita de responsabilidades em `domain`, `application` e `infrastructure`.
-2. **Resumo & Estatísticas Inteligentes de Tarefas (`GetTaskSummaryUseCase`)**:
-   - Funcionalidade que consolida total de tarefas, pendentes, em progresso e concluídas.
-3. **Integração de Ferramentas IA (`TaskTools`)**:
-   - Método anotado com `@Tool` (`obterResumoTarefas`) permitindo perguntar à IA: *"Como está o resumo das minhas tarefas hoje?"*.
+- **Processamento por Linguagem Natural (Texto & Voz)**:
+  - Permite criar receitas, despesas e consultar saldos através de frases naturais como *"Recebi meu salário de R$ 4.500,00"* ou *"Gastei R$ 35,00 no almoço"*.
+- **Speech-To-Text (Whisper STT)**:
+  - Transcrição de arquivos de áudio enviados via `MultipartFile` utilizando o modelo `whisper-1` da OpenAI.
+- **Text-To-Speech (TTS)**:
+  - Síntese da resposta textual gerada pela IA em um arquivo de áudio sintetizado MP3 (`tts-1`).
+- **Tool Calling (Function Calling)**:
+  - O `ChatClient` do Spring AI analisa a intenção do usuário e invoca automaticamente ferramentas Java (`@Bean` + `@Description`) para persistir ou buscar dados.
+- **Melhoria de Valor (Resumo Financeiro & Categorias)**:
+  - Cálculo consolidado de saldo disponível (`Saldo = Receitas - Despesas`) e suporte ao agrupamento por categorias (`ALIMENTACAO`, `TRANSPORTE`, `MORADIA`, `LAZER`, `SALARIO`, `OUTROS`).
 
 ---
 
-## 🏛️ Estrutura do Projeto (DDD)
+## 🏛️ Arquitetura DDD & SRP (Single Responsibility Principle)
 
 ```text
-src/main/java/bootcamp/taskmanager/
-├── domain/                         # Camada de Domínio (Regras de Negócio)
-│   ├── Task.java                   # Entidade Principal
-│   ├── TaskId.java                 # Objeto de Valor (UUID)
-│   ├── TaskStatus.java             # Enum de Estados (PENDING, IN_PROGRESS, COMPLETED)
-│   └── TaskRepository.java         # Contrato da Camada de Dados
+src/main/java/dio/budgeting/
+├── domain/                               # Camada de Domínio (Regras de Negócio)
+│   ├── Transaction.java                  # Entidade de Transação Financeira
+│   ├── TransactionType.java              # Enum (RECEITA, DESPESA)
+│   ├── TransactionCategory.java          # Enum (ALIMENTACAO, TRANSPORTE, MORADIA, LAZER, SALARIO, OUTROS)
+│   └── TransactionRepository.java        # Contrato da Camada de Dados
 │
-├── application/                    # Camada de Aplicação (Casos de Uso)
-│   ├── CreateTaskUseCase.java
-│   ├── ListTasksUseCase.java
-│   ├── UpdateTaskStatusUseCase.java
-│   ├── GetTaskSummaryUseCase.java
-│   ├── dto/                        # DTOs (CreateTaskCommand, TaskResponse, TaskSummary)
+├── application/                           # Camada de Aplicação (Casos de Uso e IA)
+│   ├── CreateTransactionUseCase.java     # Caso de uso de criação
+│   ├── ListTransactionsUseCase.java       # Caso de uso de listagem
+│   ├── GetFinancialSummaryUseCase.java   # Caso de uso de saldo (Melhoria)
+│   ├── dto/                              # DTOs (CreateTransactionCommand, TransactionResponse, FinancialSummary)
+│   ├── ai/                               # Serviços de IA com Responsabilidade Única (SRP)
+│   │   ├── SpeechToTextService.java      # Transcrição via OpenAiAudioTranscriptionModel
+│   │   ├── BudgetChatService.java        # Centraliza o ChatClient e Tool Calling
+│   │   └── TextToSpeechService.java      # Síntese vocal via OpenAiAudioSpeechModel
 │   └── tools/
-│       └── TaskToolsConfig.java    # Ferramentas expostas ao Spring AI (@Bean + Function)
+│       └── FinancialToolsConfig.java     # Definição das ferramentas do Spring AI (@Bean + Function)
 │
-└── infrastructure/                 # Camada de Infraestrutura (Adapters & HTTP)
+└── infrastructure/                        # Camada de Infraestrutura (Adapters & HTTP)
     ├── repository/
-    │   └── InMemoryTaskRepository.java # Repositório JPA/Em-memória
+    │   └── InMemoryTransactionRepository.java # Repositório em memória thread-safe
     └── http/
-        ├── TaskController.java     # Endpoints REST Tradicionais
-        └── TaskAiController.java   # Endpoint de Interação por Linguagem Natural (/api/ai/chat)
+        ├── TransactionController.java    # REST API tradicional (/api/transactions)
+        ├── BudgetCommandController.java  # Endpoint de comandos em linguagem natural por texto (/api/budget/text-command)
+        └── VoiceBudgetController.java    # Endpoint de comando por voz (/api/budget/voice-command)
 ```
 
 ---
 
-## ⚡ Como Executar o Projeto
+## 🔄 Fluxo de Processamento
 
-### Pré-requisitos
-- **Java 21** instalado
-- **Gradle** (incluso via Gradle Wrapper `./gradlew`)
+### 1. Fluxo por Texto (`POST /api/budget/text-command`)
+1. **Entrada**: Payload JSON contendo a mensagem em texto.
+2. **Orquestração**: O `BudgetChatService` repassa o prompt ao `ChatClient`.
+3. **Tool Calling**: A IA escolhe e executa a função financeira correspondente (`criarTransacao`, `listarTransacoes` ou `obterResumoFinanceiro`).
+4. **Resposta**: Retorno textual em JSON com o resultado da ação.
 
-### 1. Configurar Chave de API (Spring AI / OpenAI)
-No arquivo `src/main/resources/application.yml` ou definindo a variável de ambiente:
+### 2. Fluxo por Voz (`POST /api/budget/voice-command`)
+> 💡 **Reutilização de Código**: O fluxo por voz reutiliza **integralmente** o `BudgetChatService` (usado pelo endpoint textual), adicionando apenas a etapa prévia de **Speech-to-Text (Whisper)** e a etapa posterior de **Text-to-Speech (TTS)**.
 
-```bash
-export OPENAI_API_KEY="sua-chave-openai-aqui"
+```text
+[Cliente: Áudio] ──> SpeechToTextService (Whisper STT) ──> [Texto Transcrito]
+                                                                  │
+                                                                  ▼
+[Cliente: Áudio Response] <── TextToSpeechService (TTS) <── BudgetChatService (ChatClient + Tool Calling)
 ```
 
-### 2. Compilar e Iniciar a Aplicação
+---
+
+## 💾 Justificativa da Persistência em Memória
+
+O [InMemoryTransactionRepository](file:///C:/Users/erick/Documents/Projects/REPOSITÓRIOS/taskmanager/src/main/java/dio/budgeting/infrastructure/repository/InMemoryTransactionRepository.java) foi mantido em memória para **isolar e focar o desafio na utilização do Spring AI, Whisper, TTS e Tool Calling**, sem introduzir complexidade adicional desnecessária de banco de dados relacional ou migração de schemas.
+
+---
+
+## ⚡ Como Executar
+
+### Pré-requisitos
+- **Java 21**
+- **Gradle Wrapper** (incluso `./gradlew`)
+
+### 1. Configurar Chave de API (OpenAI)
+Defina a variável de ambiente ou edite o [application.yml](file:///C:/Users/erick/Documents/Projects/REPOSITÓRIOS/taskmanager/src/main/resources/application.yml):
+
+```bash
+export OPENAI_API_KEY="sk-proj-sua-chave-aqui"
+```
+
+### 2. Compilar e Iniciar
 
 ```bash
 ./gradlew bootRun
 ```
 
-A API estará rodando em `http://localhost:8080`.
+A aplicação estará disponível em `http://localhost:8080`.
 
 ---
 
 ## 🧪 Endpoints para Teste
 
-### 1. Criar Tarefa (REST)
-- **POST** `/api/tasks`
+### 1. Comando de Linguagem Natural por Texto (Spring AI Tool Calling)
+- **POST** `/api/budget/text-command`
 - **Body**:
 ```json
 {
-  "title": "Estudar Spring AI",
-  "description": "Praticar integração de Tool Calling no desafio DIO"
+  "message": "Recebi meu salário de R$ 5.000,00 no dia de hoje."
 }
 ```
-
-### 2. Obter Resumo de Estatísticas (REST - Melhoria de Valor)
-- **GET** `/api/tasks/summary`
 - **Resposta**:
-```json
-{
-  "totalTasks": 3,
-  "pendingTasks": 2,
-  "inProgressTasks": 0,
-  "completedTasks": 1
-}
-```
+> *"Transação de R$ 5.000,00 registrada com sucesso na categoria SALARIO."*
 
-### 3. Interagir com a IA (Spring AI - Tool Calling)
-- **POST** `/api/ai/chat`
-- **Body**:
+- **Consultando o Saldo**:
 ```json
 {
-  "message": "Crie uma tarefa para preparar a apresentação do bootcamp da DIO"
+  "message": "Qual é o meu saldo atual?"
 }
 ```
-- **Resposta da IA**:
-> *"Tarefa 'Preparar a apresentação do bootcamp da DIO' criada com sucesso!"*
+- **Resposta**:
+> *"Seu total de receitas é de R$ 5.000,00, total de despesas R$ 0,00 e seu saldo atual é de R$ 5.000,00."*
 
-- **Pergunta sobre o Resumo**:
-```json
-{
-  "message": "Qual é o resumo das minhas tarefas atuais?"
-}
-```
-- **Resposta da IA**:
-> *"Você possui um total de 4 tarefas: 3 pendentes e 1 concluída."*
+---
+
+### 2. Comando por Voz (Multipart Audio STT + Tool Calling + TTS)
+- **POST** `/api/budget/voice-command`
+- **Header**: `Content-Type: multipart/form-data`
+- **Body**: `file`: (Seu arquivo de áudio `comando.mp3` ou `comando.wav`)
+- **Retorno**: Arquivo de áudio MP3 sintetizado contendo a resposta falada da IA.
+
+---
+
+### 3. Endpoints REST Tradicionais
+- **POST** `/api/transactions`: Criar transação manualmente via JSON.
+- **GET** `/api/transactions`: Listar transações ativas.
+- **GET** `/api/transactions/summary`: Retorna o DTO de resumo de saldo consolidado.

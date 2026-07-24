@@ -1,6 +1,10 @@
 spring:
   application:
-    name: taskmanager
+    name: budgeting
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:demo-key}
@@ -8,6 +12,15 @@ spring:
         options:
           model: gpt-4o-mini
           temperature: 0.7
+      audio:
+        transcription:
+          options:
+            model: whisper-1
+            response-format: json
+        speech:
+          options:
+            model: tts-1
+            voice: alloy
 
 server:
   port: 8080
