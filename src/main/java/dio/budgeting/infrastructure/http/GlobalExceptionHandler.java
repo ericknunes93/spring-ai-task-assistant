@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -59,6 +60,15 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Falha de Validação");
         problemDetail.setType(URI.create("urn:problem:validation-error"));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ProblemDetail> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        log.warn("Tamanho máximo de arquivo de áudio excedido: {}", ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.PAYLOAD_TOO_LARGE, "Arquivo de áudio excede o limite máximo permitido de 10MB.");
+        problemDetail.setTitle("Arquivo Muito Grande");
+        problemDetail.setType(URI.create("urn:problem:payload-too-large"));
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(problemDetail);
     }
 
     @ExceptionHandler(IOException.class)

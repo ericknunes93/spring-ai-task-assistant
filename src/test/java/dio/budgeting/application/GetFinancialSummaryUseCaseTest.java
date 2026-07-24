@@ -38,4 +38,17 @@ class GetFinancialSummaryUseCaseTest {
         assertEquals(new BigDecimal("1500.00"), summary.totalDespesas());
         assertEquals(new BigDecimal("3500.00"), summary.saldoAtual());
     }
+
+    @Test
+    void shouldCalculateSummaryForCategoryWithZeroTransactionsWithoutNullPointerException() {
+        createUseCase.execute(new CreateTransactionCommand(new BigDecimal("500.00"), TransactionType.DESPESA, TransactionCategory.ALIMENTACAO, "Almoço"));
+
+        // Categoria LAZER não possui transações cadastradas
+        FinancialSummary summary = summaryUseCase.execute(TransactionCategory.LAZER);
+
+        assertNotNull(summary);
+        assertEquals(BigDecimal.ZERO, summary.totalReceitas());
+        assertEquals(BigDecimal.ZERO, summary.totalDespesas());
+        assertEquals(BigDecimal.ZERO, summary.saldoAtual());
+    }
 }

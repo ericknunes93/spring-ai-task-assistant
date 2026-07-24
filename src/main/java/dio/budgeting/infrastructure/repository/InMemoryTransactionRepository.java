@@ -65,4 +65,12 @@ public class InMemoryTransactionRepository implements TransactionRepository {
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
+    @Override
+    public BigDecimal sumByTypeAndCategory(TransactionType type, TransactionCategory category) {
+        return storage.values().stream()
+                .filter(t -> t.getType() == type && t.getCategory() == category)
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }

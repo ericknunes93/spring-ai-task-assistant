@@ -10,4 +10,5 @@ public interface TransactionRepository {
     List<Transaction> findByCategory(TransactionCategory category);
     List<Transaction> findByTypeAndCategory(TransactionType type, TransactionCategory category);
     BigDecimal sumByType(TransactionType type);
+    BigDecimal sumByTypeAndCategory(TransactionType type, TransactionCategory category);
 }

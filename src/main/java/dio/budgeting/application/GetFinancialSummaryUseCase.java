@@ -1,13 +1,13 @@
 package dio.budgeting.application;
 
 import dio.budgeting.application.dto.FinancialSummary;
-import dio.budgeting.domain.Transaction;
 import dio.budgeting.domain.TransactionCategory;
 import dio.budgeting.domain.TransactionRepository;
 import dio.budgeting.domain.TransactionType;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Service
 public class GetFinancialSummaryUseCase {
@@ -24,21 +24,16 @@ public class GetFinancialSummaryUseCase {
 
     public FinancialSummary execute(TransactionCategory category) {
         if (category == null) {
-            BigDecimal receitas = repository.sumByType(TransactionType.RECEITA);
-            BigDecimal despesas = repository.sumByType(TransactionType.DESPESA);
+            BigDecimal receitas = Optional.ofNullable(repository.sumByType(TransactionType.RECEITA)).orElse(BigDecimal.ZERO);
+            BigDecimal despesas = Optional.ofNullable(repository.sumByType(TransactionType.DESPESA)).orElse(BigDecimal.ZERO);
             BigDecimal saldo = receitas.subtract(despesas);
             return new FinancialSummary(receitas, despesas, saldo);
         }
 
-        BigDecimal receitas = repository.findByTypeAndCategory(TransactionType.RECEITA, category).stream()
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal despesas = repository.findByTypeAndCategory(TransactionType.DESPESA, category).stream()
-                .map(Transaction::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        BigDecimal receitas = Optional.ofNullable(repository.sumByTypeAndCategory(TransactionType.RECEITA, category)).orElse(BigDecimal.ZERO);
+        BigDecimal despesas = Optional.ofNullable(repository.sumByTypeAndCategory(TransactionType.DESPESA, category)).orElse(BigDecimal.ZERO);
         BigDecimal saldo = receitas.subtract(despesas);
+
         return new FinancialSummary(receitas, despesas, saldo);
     }
 }
