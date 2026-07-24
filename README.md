@@ -1,225 +1,286 @@
 # 🎙️ Spring AI Budgeting API
 
-Projeto desenvolvido como parte do Bootcamp **NTT DATA Java & IA** da Digital Innovation One (DIO).
+Projeto desenvolvido como parte do **Bootcamp NTT DATA Java & IA** da **Digital Innovation One (DIO)**.
 
-O objetivo deste projeto foi aplicar, na prática, os conceitos apresentados durante a trilha, integrando **Spring Boot** e **Spring AI** para criar uma API capaz de interpretar comandos financeiros enviados por texto ou voz.
+O objetivo deste projeto foi aplicar, na prática, os conceitos apresentados durante a trilha, utilizando **Spring Boot** e **Spring AI** para construir uma API capaz de interpretar comandos financeiros enviados por texto ou voz.
 
-Além da implementação proposta no desafio, aproveitei o projeto para estudar organização em camadas, tratamento de erros, testes e boas práticas de documentação.
+Além da implementação proposta no desafio, utilizei este projeto como uma oportunidade para aprofundar meus conhecimentos em **Java**, **Spring Boot**, **Spring AI**, organização em camadas, tratamento de exceções, testes automatizados e documentação técnica.
 
 ---
 
-## 🎓 Informações de Entrega (Desafio DIO)
+# 🎓 Informações de Entrega (Desafio DIO)
 
-### 1. O que o projeto faz?
-A aplicação evolui uma API de orçamento financeiro para permitir a gestão de receitas e despesas por linguagem natural. O usuário pode enviar comandos em **texto** ou **arquivos de áudio (voz)**. A API transcreve a voz com **OpenAI Whisper (STT)**, entende a intenção e executa automaticamente funções de negócio via **Tool Calling (Spring AI ChatClient)**, e sintetiza uma resposta vocal em **MP3 (TTS)**.
+## 📌 O que o projeto faz?
 
-### 2. Tecnologias Utilizadas
-- **Linguagem**: Java 21
-- **Framework**: Spring Boot 3.3.5
-- **Inteligência Artificial**: Spring AI 1.0.0-M5 (Spring AI BOM)
-- **Modelos OpenAI**:
-  - Chat & Tool Calling: `gpt-4o-mini`
-  - Transcrição de Áudio (STT): `whisper-1`
-  - Síntese de Voz (TTS): `tts-1`
-- **Build & Dependências**: Gradle, Lombok, Jakarta Validation (`spring-boot-starter-validation`)
+A aplicação evolui uma API de orçamento financeiro para permitir o gerenciamento de receitas e despesas por meio de linguagem natural.
 
-### 3. Melhorias Implementadas
-- **Resumo Financeiro com Filtro por Categoria**: Cálculo de `Saldo = Receitas - Despesas` com agregação por categoria (ex: `ALIMENTACAO`, `MORADIA`, `SALARIO`).
-- **Arquitetura Dual de Erros**: Respostas programáticas estritas via RFC 7807 (`ProblemDetail`) nos endpoints REST tradicionais e **Conversational Resilience** nos fluxos por IA (o modelo sintetiza falhas amigavelmente em português com HTTP 200 OK sem derrubar a requisição).
-- **Tratamento de Cabeçalho HTTP (RFC 3986)**: Transcrição em cabeçalho `X-Transcribed-Text` sanitizada, truncada em 200 caracteres e codificada via Spring `UriUtils.encode` (`%20`), prevenindo erros de codificação em caracteres acentuados.
+O usuário pode enviar comandos por:
 
-### 4. Como Executar o Projeto
+- Texto;
+- Áudio (voz).
+
+No fluxo de voz, a aplicação:
+
+1. Transcreve o áudio utilizando **OpenAI Whisper (Speech-to-Text)**;
+2. Interpreta a intenção do usuário através do **Spring AI ChatClient**;
+3. Executa automaticamente a regra de negócio por meio do **Tool Calling**;
+4. Gera uma resposta em áudio utilizando **Text-to-Speech (TTS)**.
+
+---
+
+# 🚀 Tecnologias Utilizadas
+
+- Java 21
+- Spring Boot 3.3.5
+- Spring AI 1.0.0-M5
+- Gradle
+- Lombok
+- Jakarta Validation
+
+### Modelos OpenAI
+
+- GPT-4o-mini (Chat + Tool Calling)
+- Whisper-1 (Speech-to-Text)
+- TTS-1 (Text-to-Speech)
+
+---
+
+# ✅ Melhorias Implementadas
+
+Além do projeto base proposto pela trilha, foram adicionadas melhorias como:
+
+- Resumo financeiro filtrado por categoria;
+- Tratamento global de exceções utilizando `ProblemDetail` (RFC 7807);
+- Melhor organização da arquitetura em camadas;
+- Tratamento adequado do cabeçalho HTTP contendo a transcrição de voz;
+- Testes unitários e de integração;
+- Documentação técnica completa do projeto.
+
+---
+
+# ▶️ Como Executar
 
 ```bash
-# 1. Clonar o repositório
 git clone https://github.com/ericknunes93/spring-ai-task-assistant.git
+
 cd spring-ai-task-assistant
+```
 
-# 2. Configurar a chave de API da OpenAI (Variável de Ambiente)
-export OPENAI_API_KEY="sua-chave-openai-aqui" # Linux/macOS
-set OPENAI_API_KEY=sua-chave-openai-aqui      # Windows CMD
-$env:OPENAI_API_KEY="sua-chave-openai-aqui"    # Windows PowerShell
+Configure sua chave da OpenAI:
 
-# 3. Compilar e executar a aplicação
+Linux/macOS
+
+```bash
+export OPENAI_API_KEY="sua-chave"
+```
+
+Windows CMD
+
+```cmd
+set OPENAI_API_KEY=sua-chave
+```
+
+PowerShell
+
+```powershell
+$env:OPENAI_API_KEY="sua-chave"
+```
+
+Execute:
+
+```bash
 ./gradlew bootRun
 ```
 
-A API estará acessível em `http://localhost:8080`.
+A aplicação ficará disponível em:
 
-### 5. Como Testar os Fluxos Principais
+```
+http://localhost:8080
+```
 
-#### A. Testar Comando em Linguagem Natural por Texto
+---
+
+# 🧪 Como Testar
+
+## Texto
+
 ```bash
 curl -X POST http://localhost:8080/api/budget/text-command \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Recebi meu salário de R$ 5000 no dia de hoje."}'
-```
-**Resposta Esperada**:
-```json
-{
-  "response": "Receita no valor de R$ 5000.00 registrada com sucesso na categoria SALARIO."
-}
+-H "Content-Type: application/json" \
+-d '{"message":"Recebi meu salário de R$5000"}'
 ```
 
-#### B. Testar Comando por Voz (Upload de Áudio MP3/WAV)
+---
+
+## Voz
+
 ```bash
 curl -X POST http://localhost:8080/api/budget/voice-command \
-  -F "file=@comando_gastei_almoco.mp3" \
-  --output resposta_voz.mp3 \
-  -i
+-F "file=@audio.mp3"
 ```
-**Resposta Esperada**:
-- **Status**: `HTTP/1.1 200 OK`
-- **Header**: `X-Transcribed-Text: Gastei%2045%20reais%20no%20almo%C3%A7o`
-- **Body**: Arquivo de áudio `resposta_voz.mp3` contendo a resposta sintetizada.
 
-#### C. Testar Resumo Financeiro Tradicional
+---
+
+## Resumo Financeiro
+
 ```bash
-curl -X GET "http://localhost:8080/api/transactions/summary?category=SALARIO"
-```
-
-### 6. O que foi aprendido?
-- **Spring AI & ChatClient**: Como orquestrar interações com modelos de linguagem e registrar funções Java como ferramentas (`Tool Calling`) usando anotações `@Bean` e `@Description`.
-- **Arquitetura Multimodal (STT + LLM + TTS)**: Como encadear transcrição de voz (Whisper), processamento cognitivo e síntese vocal mantendo o princípio da responsabilidade única (SRP).
-- **Resiliência e Erros em IA**: Como diferenciar contratos rígidos REST (RFC 7807) de fluxos de resiliência conversacional em interfaces de voz/texto.
-
----
-
-## 🏛️ Diagrama Arquitetural Geral
-
-```text
-                               [ Cliente HTTP ]
-                                  │       │
-             (Texto /text-command)│       │(Áudio /voice-command)
-                                  ▼       ▼
-                     ┌───────────────────────────────┐
-                     │          Controllers          │
-                     │  (BudgetCommand / Voice)      │
-                     └──────────────┬────────────────┘
-                                    │
-                         ┌──────────┴──────────┐
-                         │ SpeechToTextService │ (Processa Whisper STT se for voz)
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │  BudgetChatService  │ (Centraliza comunicação LLM)
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │  Spring ChatClient  │ (Tool Calling Engine)
-                         └──────────┬──────────┘
-                                    │
-                        ┌───────────┴───────────┐
-                        │  FinancialToolsConfig │ (Adaptadores anotados com @Description)
-                        └───────────┬───────────┘
-                                    │
-                        ┌───────────┴───────────┐
-                        │       UseCases        │ (Regras de Negócio Puras)
-                        └───────────┬───────────┘
-                                    │
-                        ┌───────────┴───────────┐
-                        │ TransactionRepository │ (Persistência Thread-Safe em Memória)
-                        └───────────┬───────────┘
-                                    │
-                         ┌──────────┴──────────┐
-                         │ TextToSpeechService │ (Gera síntese MP3 se for voz)
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                             [ Cliente HTTP ]
+GET /api/transactions/summary?category=SALARIO
 ```
 
 ---
 
-## 🧠 Comportamento Arquitetural de Erros: REST vs. Tool Calling
+# 📚 O que aprendi
 
-A aplicação adota duas estratégias de tratamento de erro intencionais e alinhadas com as melhores práticas de IA:
+Durante o desenvolvimento deste projeto pude praticar e compreender melhor:
 
-1. **Contrato REST Tradicional (`/api/transactions`)**:
-   - **Formato**: RFC 7807 (`ProblemDetail`) com URNs estáveis (`urn:problem:bad-request`, `urn:problem:validation-error`, `urn:problem:payload-too-large`).
-   - **Objetivo**: Garantir respostas determinísticas e estritas para clientes de API programáticos.
+- desenvolvimento de APIs REST utilizando Spring Boot;
+- organização do código em camadas;
+- integração do Spring AI com modelos da OpenAI;
+- utilização do Tool Calling para conectar modelos de IA às regras de negócio;
+- transcrição de áudio utilizando Whisper;
+- geração de respostas em áudio (Text-to-Speech);
+- tratamento global de exceções;
+- criação de testes unitários e de integração;
+- documentação técnica utilizando README.
 
-2. **Contrato Conversacional & Tool Calling (`/api/budget/text-command` e `/api/budget/voice-command`)**:
-   - **Formato**: Resposta conversacional em linguagem natural com HTTP `200 OK`.
-   - **Objetivo**: **Conversational Resilience** — Quando uma ferramenta exposta ao Spring AI sofre uma exceção durante a execução do Tool Calling (ex: categoria não suportada), o framework captura a falha e a devolve ao contexto do LLM. O modelo sintetiza uma resposta amigável em linguagem natural (ex: *"Não foi possível registrar a despesa pois a categoria informada é inválida. Categorias suportadas: ALIMENTACAO, TRANSPORTE, etc."*), permitindo que a interação por voz/texto continue sem derrubar a requisição com um erro de protocolo HTTP.
+Este projeto representa uma etapa importante da minha evolução como desenvolvedor Java e servirá de base para aprofundar meus estudos em Spring Boot, arquitetura de software e Inteligência Artificial.
 
 ---
 
-## 🎯 Fluxo de Funcionamento do Tool Calling (Spring AI)
+# 🏗️ Arquitetura
 
-```text
-[Prompt em Linguagem Natural] 
-           │
-           ▼
-[OpenAI GPT-4o-mini]
-           │ Analisa as definições anotadas com @Description em FinancialToolsConfig
-           ▼
-[Seleção Automática da Tool] ──> Ex: "criarTransacao(amount=45.0, type='DESPESA', category='ALIMENTACAO')"
-           │
-           ▼
-[Execução do Use Case] ───────> Ex: CreateTransactionUseCase.execute(...)
-           │
-           ▼
-[Retorno para o LLM] ──────────> OpenAI produz a resposta final sintetizada em texto
+O projeto foi organizado em camadas para separar responsabilidades e facilitar futuras evoluções.
+
+- **Domain** → entidades e regras de negócio;
+- **Application** → casos de uso e serviços;
+- **Infrastructure** → controllers, repositórios e integrações externas.
+
+Essa organização foi inspirada nos conceitos apresentados durante o Bootcamp e utilizada como exercício de arquitetura para aplicações Spring Boot.
+
+---
+
+# 🏛️ Diagrama Arquitetural
+
+```
+Cliente HTTP
+     │
+     ▼
+Controllers
+     │
+     ▼
+SpeechToTextService (Whisper)
+     │
+     ▼
+BudgetChatService
+     │
+     ▼
+Spring AI ChatClient
+     │
+     ▼
+FinancialToolsConfig
+     │
+     ▼
+Use Cases
+     │
+     ▼
+TransactionRepository
+     │
+     ▼
+TextToSpeechService
+     │
+     ▼
+Cliente
 ```
 
-> 💡 **Adaptadores Desacoplados**: As ferramentas expostas em `FinancialToolsConfig` atuam **exclusivamente como adaptadores** entre o framework Spring AI e os casos de uso da aplicação, sem conter regras de negócio.
+---
+
+# 🤖 Funcionamento do Tool Calling
+
+```
+Prompt do usuário
+        │
+        ▼
+OpenAI GPT-4o-mini
+        │
+Seleciona automaticamente a Tool
+        │
+        ▼
+Use Case
+        │
+        ▼
+Retorno para o modelo
+        │
+        ▼
+Resposta final ao usuário
+```
+
+As ferramentas expostas ao Spring AI atuam apenas como adaptadores entre o modelo de IA e os casos de uso da aplicação, mantendo as regras de negócio desacopladas da camada de integração.
 
 ---
 
-## 🎙️ Fluxos por Texto e Voz (Reutilização de Código & Header RFC 3986)
+# 🛡️ Tratamento de Exceções
 
-- **Fluxo por Texto (`POST /api/budget/text-command`)**:
-  - Recebe comandos textuais e os repassa diretamente ao `BudgetChatService`.
-- **Fluxo por Voz (`POST /api/budget/voice-command`)**:
-  - **Reutilização de Código**: Reutiliza **integralmente** a lógica do `BudgetChatService`, adicionando apenas a etapa prévia de **Speech-to-Text (Whisper)** e a etapa posterior de **Text-to-Speech (TTS)**.
-  - **Conformidade de Cabeçalho HTTP (RFC 3986)**: O texto transcrito no cabeçalho `X-Transcribed-Text` é sanitizado (remoção de quebras de linha), truncado em no máximo **200 caracteres** antes da codificação (para evitar estouro de cabeçalho no container HTTP) e codificado via `UriUtils.encode(..., StandardCharsets.UTF_8)` do Spring (substituindo espaços por `%20` e acentos por percent-encoding), garantindo total compatibilidade com `decodeURIComponent` em aplicações frontend.
+A aplicação utiliza um `GlobalExceptionHandler` responsável por tratar exceções comuns da API REST, como:
 
----
+- JSON inválido;
+- parâmetros inválidos;
+- falhas de validação;
+- upload de arquivos acima do limite;
+- exceções de negócio.
 
-## 🛡️ Tratamento Global de Exceções REST (`GlobalExceptionHandler.java`)
+Para os endpoints tradicionais são utilizadas respostas baseadas em `ProblemDetail (RFC 7807)`.
 
-- A classe `GlobalExceptionHandler` intercepta exceções como `IllegalArgumentException`, `HttpMessageNotReadableException` (JSON malformado), `MethodArgumentTypeMismatchException`, `MethodArgumentNotValidException` (validação DTO), `MaxUploadSizeExceededException` (áudio > 10MB) e `IOException`, retornando URNs estáveis como `urn:problem:validation-error` e `urn:problem:payload-too-large`.
-- Erros internos do servidor são registrados no log do servidor com stack trace completa (`log.error(...)`), prevenindo o vazamento de detalhes internos da API externa da OpenAI.
-
----
-
-## 🌱 Evoluções Futuras
-
-Este projeto foi desenvolvido durante o Bootcamp NTT DATA Java & IA da DIO utilizando os conceitos apresentados ao longo da trilha.
-
-Como estou em processo de aprofundamento em Java, Spring Boot e Spring AI, utilizei este projeto como uma oportunidade prática de aprendizado. Durante o desenvolvimento identifiquei algumas melhorias que pretendo implementar conforme avanço nos estudos:
-
-- Mitigar riscos de *Indirect Prompt Injection* por meio de sanitização e delimitação de contexto.
-- Configurar uma pipeline de CI/CD utilizando GitHub Actions.
-- Substituir o repositório em memória por PostgreSQL com Spring Data JPA.
-- Adicionar autenticação utilizando Spring Security e JWT.
-- Documentar a API com OpenAPI/Swagger.
-- Containerizar a aplicação com Docker e Docker Compose.
-- Ampliar a cobertura de testes automatizados.
-- Realizar o deploy da aplicação em ambiente de nuvem.
+Nos fluxos de IA, o próprio modelo gera respostas amigáveis ao usuário quando ocorre alguma falha durante a execução de uma ferramenta.
 
 ---
 
-## 💾 Justificativa do Repositório em Memória
+# 💾 Persistência
 
-O [InMemoryTransactionRepository](src/main/java/dio/budgeting/infrastructure/repository/InMemoryTransactionRepository.java) foi mantido em memória para **isolar e focar o desafio na utilização do Spring AI, Whisper, TTS e Tool Calling**, sem introduzir complexidade adicional desnecessária de banco de dados relacional ou migração de schemas.
+Para manter o foco do desafio na integração com Spring AI, foi utilizada uma implementação em memória (`InMemoryTransactionRepository`).
+
+Essa escolha reduz a complexidade da infraestrutura e permite concentrar o estudo na arquitetura da aplicação e na integração com Inteligência Artificial.
 
 ---
 
-## 🧪 Testes Unitários e de Integração
+# 🧪 Testes
 
-A aplicação conta com uma suíte completa de testes unitários e de integração em `src/test/java/dio/budgeting/`:
-- `CreateTransactionUseCaseTest`: Valida criação e invariantes de transações.
-- `GetFinancialSummaryUseCaseTest`: Valida agregação de saldo por categoria com tratamento de listas vazias e proteção contra NullPointerException.
-- `ListTransactionsUseCaseTest`: Valida filtros combinados por tipo e categoria.
-- `TransactionControllerIT`: Valida criação, listagem e falhas de validação DTO (retornando `urn:problem:validation-error`).
-- `BudgetCommandControllerIT`: Valida orquestração textual.
-- `VoiceBudgetControllerIT`: Valida fluxo de upload multipart de áudio, truncamento de 200 caracteres e percent-encoding RFC 3986 (%20) no cabeçalho `X-Transcribed-Text`.
+O projeto possui testes unitários e de integração cobrindo os principais fluxos da aplicação, incluindo:
 
-Para executar toda a suíte de testes:
+- criação de transações;
+- resumo financeiro;
+- listagem de dados;
+- validação de entradas;
+- integração dos controllers;
+- fluxo de comandos por texto;
+- fluxo de comandos por voz.
+
+Execução:
+
 ```bash
 ./gradlew test
 ```
+
+---
+
+# 🌱 Evoluções Futuras
+
+Este projeto continuará evoluindo conforme avanço nos estudos de Java, Spring Boot e arquitetura de software.
+
+Entre as melhorias planejadas estão:
+
+- Mitigar riscos de Indirect Prompt Injection;
+- Configurar CI/CD com GitHub Actions;
+- Migrar a persistência para PostgreSQL utilizando Spring Data JPA;
+- Adicionar autenticação com Spring Security e JWT;
+- Documentar a API utilizando OpenAPI/Swagger;
+- Containerizar a aplicação com Docker e Docker Compose;
+- Ampliar a cobertura de testes automatizados;
+- Publicar a aplicação em ambiente de nuvem.
+
+---
+
+# 👨💻 Autor
+
+**Erick Oliveira**
+
+Projeto desenvolvido durante o Bootcamp **NTT DATA Java & IA** da **Digital Innovation One**, como parte da minha jornada de aprendizado em Java, Spring Boot e Inteligência Artificial aplicada ao desenvolvimento de software.
