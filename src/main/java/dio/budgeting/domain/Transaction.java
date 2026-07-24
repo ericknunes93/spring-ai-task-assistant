@@ -29,7 +29,8 @@ public class Transaction {
     }
 
     public void assignId(Long id) {
-        Assert.notNull(id, "ID cannot be null");
+        Assert.state(this.id == null, "ID já atribuído.");
+        Assert.notNull(id, "ID não pode ser nulo.");
         this.id = id;
     }
 }
