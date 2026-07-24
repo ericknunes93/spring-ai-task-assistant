@@ -1,10 +1,10 @@
-# 🎙️ DIO Spring Boot - API de Orçamento com Voz e Texto (Spring AI)
+# 🎙️ Spring AI Budgeting API
 
-Projeto desenvolvido como solução do **Desafio de Projeto com Spring AI** da Digital Innovation One (DIO).
+Projeto desenvolvido como parte do Bootcamp **NTT DATA Java & IA** da Digital Innovation One (DIO).
 
-A **Spring AI Budgeting API** é uma aplicação Java/Spring Boot que utiliza uma arquitetura em camadas inspirada em **Domain-Driven Design (DDD)**, separando claramente Domínio, Aplicação e Infraestrutura, além de aplicar o **Single Responsibility Principle (SRP)**. 
+O objetivo deste projeto foi aplicar, na prática, os conceitos apresentados durante a trilha, integrando **Spring Boot** e **Spring AI** para criar uma API capaz de interpretar comandos financeiros enviados por texto ou voz.
 
-A aplicação processa comandos em linguagem natural por **texto** e **voz (upload de áudio)** para gestão de transações financeiras pessoais utilizando o mecanismo de **Tool Calling** do Spring AI.
+Além da implementação proposta no desafio, aproveitei o projeto para estudar organização em camadas, tratamento de erros, testes e boas práticas de documentação.
 
 ---
 
