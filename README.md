@@ -43,7 +43,7 @@ A aplicação processa comandos em linguagem natural por **texto** e **voz (uplo
                         └───────────┬───────────┘
                                     │
                         ┌───────────┴───────────┐
-                        │ TransactionRepository │ (Persistência Thread-Safe)
+                        │ TransactionRepository │ (Persistência Thread-Safe em Memória)
                         └───────────┬───────────┘
                                     │
                          ┌──────────┴──────────┐
@@ -53,6 +53,20 @@ A aplicação processa comandos em linguagem natural por **texto** e **voz (uplo
                                     ▼
                              [ Cliente HTTP ]
 ```
+
+---
+
+## 🧠 Comportamento Arquitetural de Erros: REST vs. Tool Calling
+
+A aplicação adota duas estratégias de tratamento de erro intencionais e alinhadas com as melhores práticas de IA:
+
+1. **Contrato REST Tradicional (`/api/transactions`)**:
+   - **Formato**: RFC 7807 (`ProblemDetail`) com URNs estáveis (`urn:problem:bad-request`, `urn:problem:validation-error`, `urn:problem:payload-too-large`).
+   - **Objetivo**: Garantir respostas determinísticas e estritas para clientes de API programáticos.
+
+2. **Contrato Conversacional & Tool Calling (`/api/budget/text-command` e `/api/budget/voice-command`)**:
+   - **Formato**: Resposta conversacional em linguagem natural com HTTP `200 OK`.
+   - **Objetivo**: **Conversational Resilience** — Quando uma ferramenta exposta ao Spring AI sofre uma exceção durante a execução do Tool Calling (ex: categoria não suportada), o framework captura a falha e a devolve ao contexto do LLM. O modelo sintetiza uma resposta amigável em linguagem natural (ex: *"Não foi possível registrar a despesa pois a categoria informada é inválida. Categorias suportadas: ALIMENTACAO, TRANSPORTE, etc."*), permitindo que a interação por voz/texto continue sem derrubar a requisição com um erro de protocolo HTTP.
 
 ---
 
@@ -87,10 +101,10 @@ A aplicação processa comandos em linguagem natural por **texto** e **voz (uplo
 
 ---
 
-## 🛡️ Tratamento Global de Exceções & Retornos Fortes
+## 🛡️ Tratamento Global de Exceções REST (`GlobalExceptionHandler.java`)
 
-- A aplicação utiliza `@RestControllerAdvice` na classe `GlobalExceptionHandler`, interceptando exceções como `IllegalArgumentException`, `HttpMessageNotReadableException` (JSON malformado), `MethodArgumentTypeMismatchException` e `IOException` e padronizando as respostas através da RFC 7807 (`ProblemDetail` com URNs estáveis como `urn:problem:bad-request` e `urn:problem:malformed-json`).
-- Os logs internos de produção registram falhas com stack traces completas (`log.error(...)`), prevenindo o vazamento de detalhes internos da API externa da OpenAI para o cliente HTTP.
+- A classe `GlobalExceptionHandler` intercepta exceções como `IllegalArgumentException`, `HttpMessageNotReadableException` (JSON malformado), `MethodArgumentTypeMismatchException`, `MethodArgumentNotValidException` (validação DTO), `MaxUploadSizeExceededException` (áudio > 10MB) e `IOException`, retornando URNs estáveis como `urn:problem:validation-error` e `urn:problem:payload-too-large`.
+- Erros internos do servidor são registrados no log do servidor com stack trace completa (`log.error(...)`), prevenindo o vazamento de detalhes internos da API externa da OpenAI.
 
 ---
 
@@ -146,3 +160,15 @@ O [InMemoryTransactionRepository](file:///C:/Users/erick/Documents/Projects/REPO
   "saldoAtual": -45.00
 }
 ```
+
+---
+
+## 🧪 Testes Unitários e de Integração
+
+A aplicação conta com uma suíte de testes unitários e de integração em `src/test/java/dio/budgeting/`:
+- `CreateTransactionUseCaseTest`: Valida criação e invariantes de transações.
+- `GetFinancialSummaryUseCaseTest`: Valida agregação de saldo por categoria com tratamento de listas vazias.
+- `ListTransactionsUseCaseTest`: Valida filtros combinados por tipo e categoria.
+- `TransactionControllerIT`: Valida criação, listagem e falhas de validação DTO (retornando `urn:problem:validation-error`).
+- `BudgetCommandControllerIT`: Valida orquestração textual.
+- `VoiceBudgetControllerIT`: Valida fluxo de upload multipart de áudio.
