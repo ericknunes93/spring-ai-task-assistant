@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/api/budget")
 public class VoiceBudgetController {
@@ -46,8 +49,9 @@ public class VoiceBudgetController {
         // 3. Text-To-Speech (TTS)
         byte[] audioResponseBytes = textToSpeechService.synthesizeSpeech(responseText);
 
+        // Sanitização de acentos/caracteres multi-byte via URLEncoder (UTF-8) para conformidade estrita com RFC 7230
         String safeHeaderValue = transcribedText != null ?
-                transcribedText.replaceAll("[\\r\\n]", " ").substring(0, Math.min(transcribedText.length(), 200)) : "";
+                URLEncoder.encode(transcribedText.replaceAll("[\\r\\n]", " "), StandardCharsets.UTF_8) : "";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("audio/mpeg"));

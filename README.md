@@ -92,12 +92,13 @@ A aplicação adota duas estratégias de tratamento de erro intencionais e alinh
 
 ---
 
-## 🎙️ Fluxos por Texto e Voz (Reutilização de Código)
+## 🎙️ Fluxos por Texto e Voz (Reutilização de Código & Encoding HTTP Header)
 
 - **Fluxo por Texto (`POST /api/budget/text-command`)**:
   - Recebe comandos textuais e os repassa diretamente ao `BudgetChatService`.
 - **Fluxo por Voz (`POST /api/budget/voice-command`)**:
   - **Reutilização de Código**: Reutiliza **integralmente** a lógica do `BudgetChatService`, adicionando apenas a etapa prévia de **Speech-to-Text (Whisper)** e a etapa posterior de **Text-to-Speech (TTS)**.
+  - **Conformidade de Cabeçalho HTTP (RFC 7230)**: O texto transcrito retornado no cabeçalho `X-Transcribed-Text` é codificado via `URLEncoder.encode(..., StandardCharsets.UTF_8)`, garantindo que acentuações da língua portuguesa (ex: *"café da manhã"*, *"almoço"*) sejam transmitidas com segurança sem violar a especificação HTTP.
 
 ---
 
@@ -147,7 +148,7 @@ O [InMemoryTransactionRepository](file:///C:/Users/erick/Documents/Projects/REPO
 - **Resposta**:
   - **Status**: `200 OK`
   - **Content-Type**: `audio/mpeg`
-  - **Header Especial**: `X-Transcribed-Text: Gastei 45 reais no almoço`
+  - **Header Especial**: `X-Transcribed-Text: Gastei+50+reais+no+caf%C3%A9+da+manh%C3%A3+e+almo%C3%A7o` (URLEncoder UTF-8 conformidade RFC 7230)
   - **Body**: Array de bytes do áudio sintetizado em MP3.
 
 ### 3. REST Tradicional - Obter Resumo por Categoria
@@ -171,4 +172,4 @@ A aplicação conta com uma suíte de testes unitários e de integração em `sr
 - `ListTransactionsUseCaseTest`: Valida filtros combinados por tipo e categoria.
 - `TransactionControllerIT`: Valida criação, listagem e falhas de validação DTO (retornando `urn:problem:validation-error`).
 - `BudgetCommandControllerIT`: Valida orquestração textual.
-- `VoiceBudgetControllerIT`: Valida fluxo de upload multipart de áudio.
+- `VoiceBudgetControllerIT`: Valida fluxo de upload multipart de áudio e encoding UTF-8 no cabeçalho `X-Transcribed-Text`.
