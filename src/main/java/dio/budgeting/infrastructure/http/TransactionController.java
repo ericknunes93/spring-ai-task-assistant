@@ -8,6 +8,7 @@ import dio.budgeting.application.dto.FinancialSummary;
 import dio.budgeting.application.dto.TransactionResponse;
 import dio.budgeting.domain.TransactionCategory;
 import dio.budgeting.domain.TransactionType;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody CreateTransactionCommand command) {
+    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody @Valid CreateTransactionCommand command) {
         TransactionResponse response = createTransactionUseCase.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -45,8 +46,8 @@ public class TransactionController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<FinancialSummary> getSummary() {
-        FinancialSummary summary = getFinancialSummaryUseCase.execute();
+    public ResponseEntity<FinancialSummary> getSummary(@RequestParam(required = false) TransactionCategory category) {
+        FinancialSummary summary = getFinancialSummaryUseCase.execute(category);
         return ResponseEntity.ok(summary);
     }
 }

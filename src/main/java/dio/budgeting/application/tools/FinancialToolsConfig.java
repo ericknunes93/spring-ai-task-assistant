@@ -31,7 +31,9 @@ public class FinancialToolsConfig {
         String category
     ) {}
 
-    public record GetSummaryRequest(String filter) {}
+    public record GetSummaryRequest(
+        String category
+    ) {}
 
     @Bean
     @Description("Registra uma nova transação financeira de receita ou despesa. Exemplo: valor 45.0, tipo DESPESA, categoria ALIMENTACAO.")
@@ -52,18 +54,22 @@ public class FinancialToolsConfig {
     }
 
     @Bean
-    @Description("Lista o histórico de transações financeiras registradas.")
+    @Description("Lista o histórico de transações financeiras registradas com filtro opcional por tipo e categoria.")
     public Function<ListTransactionsRequest, List<TransactionResponse>> listarTransacoes(ListTransactionsUseCase useCase) {
         return request -> {
-            TransactionType type = request.type() != null ? TransactionType.valueOf(request.type().toUpperCase()) : null;
-            TransactionCategory category = request.category() != null ? TransactionCategory.valueOf(request.category().toUpperCase()) : null;
+            TransactionType type = request.type() != null && !request.type().isBlank() ? TransactionType.valueOf(request.type().toUpperCase()) : null;
+            TransactionCategory category = request.category() != null && !request.category().isBlank() ? TransactionCategory.valueOf(request.category().toUpperCase()) : null;
             return useCase.execute(type, category);
         };
     }
 
     @Bean
-    @Description("Obtém o resumo financeiro consolidado contendo o total de receitas, total de despesas e o saldo disponível (Saldo = Receitas - Despesas).")
+    @Description("Obtém o resumo financeiro consolidado (total de receitas, despesas e saldo). Aceita filtro opcional de categoria (ex: ALIMENTACAO, TRANSPORTE, MORADIA, LAZER, SALARIO, OUTROS).")
     public Function<GetSummaryRequest, FinancialSummary> obterResumoFinanceiro(GetFinancialSummaryUseCase useCase) {
-        return request -> useCase.execute();
+        return request -> {
+            TransactionCategory category = request.category() != null && !request.category().isBlank() ?
+                    TransactionCategory.valueOf(request.category().toUpperCase()) : null;
+            return useCase.execute(category);
+        };
     }
 }

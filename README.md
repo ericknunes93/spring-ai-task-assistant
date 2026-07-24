@@ -89,8 +89,16 @@ A aplicação processa comandos em linguagem natural por **texto** e **voz (uplo
 
 ## 🛡️ Tratamento Global de Exceções & Retornos Fortes
 
-- A aplicação utiliza `@RestControllerAdvice` na classe `GlobalExceptionHandler`, interceptando exceções como `IllegalArgumentException` e `IOException` e padronizando as respostas de erro através do formato RFC 7807 (`ProblemDetail`).
-- Os controllers utilizam tipos de retorno estritos (`ResponseEntity<byte[]>` e `ResponseEntity<Map<String, String>>`), garantindo consistência na API.
+- A aplicação utiliza `@RestControllerAdvice` na classe `GlobalExceptionHandler`, interceptando exceções como `IllegalArgumentException`, `HttpMessageNotReadableException` (JSON malformado), `MethodArgumentTypeMismatchException` e `IOException` e padronizando as respostas através da RFC 7807 (`ProblemDetail` com URNs estáveis como `urn:problem:bad-request` e `urn:problem:malformed-json`).
+- Os logs internos de produção registram falhas com stack traces completas (`log.error(...)`), prevenindo o vazamento de detalhes internos da API externa da OpenAI para o cliente HTTP.
+
+---
+
+## 🔒 Segurança & Evoluções Futuras (Mitigação de Prompt Injection)
+
+- **Superfície de Ataque via Transcrição**:
+  - A descrição de transações geradas via transcrição de voz (`Whisper`) é armazenada e posteriormente pode retornar ao contexto do `ChatClient` durante consultas de histórico.
+  - **Evolução Futura**: Sanitização e delimitadores explícitos (ex: XML/Markdown blocks) no prompt do sistema para evitar que entradas maliciosas no áudio alterem o comportamento do modelo LLM (*Indirect Prompt Injection*).
 
 ---
 
@@ -128,22 +136,13 @@ O [InMemoryTransactionRepository](file:///C:/Users/erick/Documents/Projects/REPO
   - **Header Especial**: `X-Transcribed-Text: Gastei 45 reais no almoço`
   - **Body**: Array de bytes do áudio sintetizado em MP3.
 
-### 3. REST Tradicional - Obter Resumo (Melhoria de Valor)
-- **GET** `/api/transactions/summary`
+### 3. REST Tradicional - Obter Resumo por Categoria
+- **GET** `/api/transactions/summary?category=ALIMENTACAO`
 - **Resposta**:
 ```json
 {
-  "totalReceitas": 5000.00,
-  "totalDespesas": 150.00,
-  "saldoAtual": 4850.00
+  "totalReceitas": 0.00,
+  "totalDespesas": 45.00,
+  "saldoAtual": -45.00
 }
 ```
-
----
-
-## 🧪 Testes Unitários
-
-A aplicação conta com uma suíte de testes unitários em `src/test/java/dio/budgeting/application/`:
-- `CreateTransactionUseCaseTest`: Valida criação e invariantes de transações.
-- `GetFinancialSummaryUseCaseTest`: Valida agregação de saldo (`Saldo = Receitas - Despesas`).
-- `ListTransactionsUseCaseTest`: Valida filtros combinados por tipo e categoria.
