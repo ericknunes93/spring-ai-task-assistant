@@ -14,8 +14,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.util.UriUtils;
 
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -52,7 +52,7 @@ class VoiceBudgetControllerIT {
     private BudgetChatService budgetChatService;
 
     @Test
-    void shouldProcessVoiceCommandWithAccentedTextInHeaderSuccessfully() throws Exception {
+    void shouldProcessVoiceCommandWithAccentedTextAndTruncationInHeaderSuccessfully() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "file",
                 "audio.mp3",
@@ -61,7 +61,7 @@ class VoiceBudgetControllerIT {
         );
 
         String transcribedTextWithAccents = "Gastei 50 reais no café da manhã e almoço";
-        String expectedEncodedHeader = URLEncoder.encode(transcribedTextWithAccents, StandardCharsets.UTF_8);
+        String expectedEncodedHeader = UriUtils.encode(transcribedTextWithAccents, StandardCharsets.UTF_8);
 
         when(speechToTextService.transcribe(any())).thenReturn(transcribedTextWithAccents);
         when(budgetChatService.processNaturalLanguageCommand(transcribedTextWithAccents)).thenReturn("Despesa salva");
@@ -71,5 +71,27 @@ class VoiceBudgetControllerIT {
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Transcribed-Text", expectedEncodedHeader))
                 .andExpect(content().contentType("audio/mpeg"));
+    }
+
+    @Test
+    void shouldTruncateLongTranscriptionsTo200CharsBeforeEncoding() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "audio.mp3",
+                "audio/mpeg",
+                "fake-audio-bytes".getBytes()
+        );
+
+        String longTranscription = "A".repeat(300);
+        String truncated = "A".repeat(200);
+        String expectedEncodedHeader = UriUtils.encode(truncated, StandardCharsets.UTF_8);
+
+        when(speechToTextService.transcribe(any())).thenReturn(longTranscription);
+        when(budgetChatService.processNaturalLanguageCommand(longTranscription)).thenReturn("Despesa salva");
+        when(textToSpeechService.synthesizeSpeech("Despesa salva")).thenReturn("fake-mp3-bytes".getBytes());
+
+        mockMvc.perform(multipart("/api/budget/voice-command").file(file))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Transcribed-Text", expectedEncodedHeader));
     }
 }

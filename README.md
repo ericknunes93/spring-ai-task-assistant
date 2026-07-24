@@ -48,7 +48,7 @@ A aplicação processa comandos em linguagem natural por **texto** e **voz (uplo
                                     │
                          ┌──────────┴──────────┐
                          │ TextToSpeechService │ (Gera síntese MP3 se for voz)
-                         └──────────┬──────────┘
+                         └──────────┴──────────┘
                                     │
                                     ▼
                              [ Cliente HTTP ]
@@ -92,13 +92,13 @@ A aplicação adota duas estratégias de tratamento de erro intencionais e alinh
 
 ---
 
-## 🎙️ Fluxos por Texto e Voz (Reutilização de Código & Encoding HTTP Header)
+## 🎙️ Fluxos por Texto e Voz (Reutilização de Código & Header RFC 3986)
 
 - **Fluxo por Texto (`POST /api/budget/text-command`)**:
   - Recebe comandos textuais e os repassa diretamente ao `BudgetChatService`.
 - **Fluxo por Voz (`POST /api/budget/voice-command`)**:
   - **Reutilização de Código**: Reutiliza **integralmente** a lógica do `BudgetChatService`, adicionando apenas a etapa prévia de **Speech-to-Text (Whisper)** e a etapa posterior de **Text-to-Speech (TTS)**.
-  - **Conformidade de Cabeçalho HTTP (RFC 7230)**: O texto transcrito retornado no cabeçalho `X-Transcribed-Text` é codificado via `URLEncoder.encode(..., StandardCharsets.UTF_8)`, garantindo que acentuações da língua portuguesa (ex: *"café da manhã"*, *"almoço"*) sejam transmitidas com segurança sem violar a especificação HTTP.
+  - **Conformidade de Cabeçalho HTTP (RFC 3986)**: O texto transcrito no cabeçalho `X-Transcribed-Text` é sanitizado (remoção de quebras de linha), truncado em no máximo **200 caracteres** antes da codificação (para evitar estouro de cabeçalho no container HTTP) e codificado via `UriUtils.encode(..., StandardCharsets.UTF_8)` do Spring (substituindo espaços por `%20` e acentos por percent-encoding), garantindo total compatibilidade com `decodeURIComponent` em aplicações frontend.
 
 ---
 
@@ -148,7 +148,7 @@ O [InMemoryTransactionRepository](file:///C:/Users/erick/Documents/Projects/REPO
 - **Resposta**:
   - **Status**: `200 OK`
   - **Content-Type**: `audio/mpeg`
-  - **Header Especial**: `X-Transcribed-Text: Gastei+50+reais+no+caf%C3%A9+da+manh%C3%A3+e+almo%C3%A7o` (URLEncoder UTF-8 conformidade RFC 7230)
+  - **Header Especial**: `X-Transcribed-Text: Gastei%2050%20reais%20no%20caf%C3%A9%20da%20manh%C3%A3%20e%20almo%C3%A7o` (Percent-encoding RFC 3986 `%20` via Spring `UriUtils`)
   - **Body**: Array de bytes do áudio sintetizado em MP3.
 
 ### 3. REST Tradicional - Obter Resumo por Categoria
@@ -172,4 +172,4 @@ A aplicação conta com uma suíte de testes unitários e de integração em `sr
 - `ListTransactionsUseCaseTest`: Valida filtros combinados por tipo e categoria.
 - `TransactionControllerIT`: Valida criação, listagem e falhas de validação DTO (retornando `urn:problem:validation-error`).
 - `BudgetCommandControllerIT`: Valida orquestração textual.
-- `VoiceBudgetControllerIT`: Valida fluxo de upload multipart de áudio e encoding UTF-8 no cabeçalho `X-Transcribed-Text`.
+- `VoiceBudgetControllerIT`: Valida fluxo de upload multipart de áudio, truncamento de 200 caracteres e percent-encoding RFC 3986 (%20) no cabeçalho `X-Transcribed-Text`.
