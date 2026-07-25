@@ -260,6 +260,21 @@ Execução:
 ./gradlew test
 ```
 
+Nota sobre caminhos do sistema:
+
+Evite usar caminhos com caracteres não-ASCII (ex.: pastas com acentos) para armazenar o repositório e executar builds/testes. Ferramentas Java, Gradle e runners de teste podem falhar ao carregar classes quando o caminho contém caracteres especiais.
+
+Se o repositório já estiver em um caminho com acentos, crie um junction (atalho de pasta) ou clone o repositório em um caminho ASCII. Exemplo (PowerShell):
+
+```powershell
+# cria C:\projects\taskmanager apontando para a pasta atual com acentos
+New-Item -ItemType Junction -Path C:\projects\taskmanager -Target "C:\Users\erick\Documents\Projects\REPOSITÓRIOS\taskmanager"
+```
+
+Após isso, abra o projeto a partir do caminho ASCII (por exemplo C:\projects\taskmanager) ou execute os comandos Gradle a partir desse caminho.
+
+---
+
 ---
 
 # 🌱 Evoluções Futuras
